@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import pe.LaCasona.backend_casona.models.AplicationUser;
 import pe.LaCasona.backend_casona.models.Role;
+import pe.LaCasona.backend_casona.reposity.UserRepository;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -19,19 +20,16 @@ public class UserService implements UserDetailsService {
     @Autowired
     private PasswordEncoder encoder;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
         System.out.println("In the user details service");
 
-        if (!username.equals("Ethan"))
-            throw new UsernameNotFoundException("Not Etham");
-
-        Set<Role> roles = new HashSet<>();
-        roles.add(new Role(1, "USER"));
-
-        return new AplicationUser(1, "Ethan", encoder.encode("password"), roles);
-
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("user is not valid"));
     }
 
 }
