@@ -23,6 +23,7 @@ public class AuthenticationService {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     public AplicationUser registerUser(String username, String password) {

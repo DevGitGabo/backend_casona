@@ -29,6 +29,8 @@ public class BackendCasonaApplication {
 				return;
 			Role adminRole = roleRepository.save(new Role("ADMIN"));
 
+			roleRepository.save(new Role("USER"));
+
 			Set<Role> roles = new HashSet<>();
 			roles.add(adminRole);
 
