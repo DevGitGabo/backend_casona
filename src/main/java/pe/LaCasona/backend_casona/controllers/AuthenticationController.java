@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import pe.LaCasona.backend_casona.models.AplicationUser;
+import pe.LaCasona.backend_casona.models.LoginResponseDTO;
 import pe.LaCasona.backend_casona.models.RegistrationDTO;
 import pe.LaCasona.backend_casona.services.AuthenticationService;
 
@@ -22,5 +23,10 @@ public class AuthenticationController {
     @PostMapping("/register")
     public AplicationUser registerUser(@RequestBody RegistrationDTO body) {
         return authenticationService.registerUser(body.getUsername(), body.getPassword());
+    }
+
+    @PostMapping("/login")
+    public LoginResponseDTO loginUser(@RequestBody RegistrationDTO body) {
+        return authenticationService.loginUser(body.getUsername(), body.getPassword());
     }
 }

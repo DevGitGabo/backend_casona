@@ -27,9 +27,33 @@ public class BackendCasonaApplication {
 		return args -> {
 			if (roleRepository.findByAuthority("ADMIN").isPresent())
 				return;
+
 			Role adminRole = roleRepository.save(new Role("ADMIN"));
 
+			if (roleRepository.findByAuthority("USER").isPresent())
+				return;
+
 			roleRepository.save(new Role("USER"));
+
+			if (roleRepository.findByAuthority("CASHIER").isPresent())
+				return;
+
+			roleRepository.save(new Role("CASHIER"));
+
+			if (roleRepository.findByAuthority("CHEF").isPresent())
+				return;
+
+			roleRepository.save(new Role("CHEF"));
+
+			if (roleRepository.findByAuthority("DELIVERY").isPresent())
+				return;
+
+			roleRepository.save(new Role("DELIVERY"));
+
+			if (roleRepository.findByAuthority("WAITER").isPresent())
+				return;
+
+			roleRepository.save(new Role("WAITER"));
 
 			Set<Role> roles = new HashSet<>();
 			roles.add(adminRole);
