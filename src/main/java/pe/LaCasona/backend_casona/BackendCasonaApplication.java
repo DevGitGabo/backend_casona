@@ -11,8 +11,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import pe.LaCasona.backend_casona.models.Auth.AplicationUser;
 import pe.LaCasona.backend_casona.models.Auth.Role;
+import pe.LaCasona.backend_casona.models.Entity.UsuarioEntity;
 import pe.LaCasona.backend_casona.reposity.RoleRepository;
 import pe.LaCasona.backend_casona.reposity.UserRepository;
+import pe.LaCasona.backend_casona.reposity.UsuarioRepository;
 
 @SpringBootApplication
 public class BackendCasonaApplication {
@@ -23,7 +25,7 @@ public class BackendCasonaApplication {
 
 	@Bean
 	CommandLineRunner run(RoleRepository roleRepository, UserRepository userRepository,
-			PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository) {
 		return args -> {
 			if (roleRepository.findByAuthority("ADMIN").isPresent())
 				return;
@@ -64,8 +66,13 @@ public class BackendCasonaApplication {
 			roles.add(adminRole);
 
 			AplicationUser admin = new AplicationUser(1, "admin", passwordEncoder.encode("password"), roles);
+            Set<AplicationUser> users = new HashSet<>();
+            UsuarioEntity newUsuario = new UsuarioEntity(users);
 
-			userRepository.save(admin);
+            users.add(admin);
+
+            userRepository.save(admin);
+            usuarioRepository.save(newUsuario);
 		};
 	}
 }

@@ -13,30 +13,22 @@ public class UsuarioEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_usuario")
     private Integer idUsuario;
-
-    @Column(name = "nombre_usuario")
-    private String nombreUsuario;
-
-    @Column(name = "hash_contraseña")
-    private String hashContraseña;
-
-    @Column(name = "tipo_usuario")
-    private String tipoUsuario;
-
     private String email;
-
     @ManyToOne
     @JoinColumn(name = "id_RRHH")
     private RRHHEntity rrhh;
-
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-        name = "usuario_role_junction",
+        name = "usuario_user_junction",
         joinColumns = @JoinColumn(name = "id_usuario"),
         inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<AplicationUser> usuarios;
-
+    public UsuarioEntity() {
+    }
+    public UsuarioEntity(Set<AplicationUser> usuarios) {
+        this.usuarios = usuarios;
+    }
     public Set<AplicationUser> getUsuarios() {
         return usuarios;
     }

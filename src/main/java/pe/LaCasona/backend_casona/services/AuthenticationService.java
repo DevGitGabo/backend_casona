@@ -15,8 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import pe.LaCasona.backend_casona.models.Auth.AplicationUser;
 import pe.LaCasona.backend_casona.models.DTO.LoginResponseDTO;
 import pe.LaCasona.backend_casona.models.Auth.Role;
+import pe.LaCasona.backend_casona.models.Entity.UsuarioEntity;
 import pe.LaCasona.backend_casona.reposity.RoleRepository;
 import pe.LaCasona.backend_casona.reposity.UserRepository;
+import pe.LaCasona.backend_casona.reposity.UsuarioRepository;
 
 @Service
 @Transactional
@@ -35,18 +37,35 @@ public class AuthenticationService {
     private AuthenticationManager authenticationManager;
 
     @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
     private TokenService tokenService;
 
     public AplicationUser registerUser(String username, String password) {
 
+        // Verificar si el usuario ya existe
+        if (userRepository.findByUsername(username).isPresent()) {
+            // Puedes lanzar una excepción o manejar de otra manera la situación de usuario duplicado
+            return null;
+        }
+
         String encodedPassword = passwordEncoder.encode(password);
         Role userRole = roleRepository.findByAuthority("USER").get();
-
         Set<Role> authorities = new HashSet<>();
 
         authorities.add(userRole);
 
-        return userRepository.save(new AplicationUser(0, username, encodedPassword, authorities));
+        AplicationUser newUser = new AplicationUser(0, username, encodedPassword, authorities);
+        Set<AplicationUser> users = new HashSet<>();
+        UsuarioEntity newUsuario = new UsuarioEntity(users);
+
+        users.add(newUser);
+
+        userRepository.save(newUser);
+        usuarioRepository.save(newUsuario);
+
+        return newUser;
     }
 
     public LoginResponseDTO loginUser(String username, String password) {

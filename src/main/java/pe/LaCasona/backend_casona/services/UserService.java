@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import pe.LaCasona.backend_casona.reposity.UserRepository;
+import pe.LaCasona.backend_casona.reposity.UsuarioRepository;
 
 @Service
 public class UserService implements UserDetailsService {
