@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/delivery")
 @CrossOrigin("*")
 public class DeliveryController {
-
     @GetMapping("/")
     public String helloDeliveryController() {
         return "Delivery access level";

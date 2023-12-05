@@ -1,4 +1,6 @@
-package pe.LaCasona.backend_casona.models;
+package pe.LaCasona.backend_casona.models.DTO;
+
+import pe.LaCasona.backend_casona.models.Auth.AplicationUser;
 
 public class LoginResponseDTO {
     private AplicationUser user;

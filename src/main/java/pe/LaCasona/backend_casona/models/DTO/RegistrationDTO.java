@@ -1,4 +1,4 @@
-package pe.LaCasona.backend_casona.models;
+package pe.LaCasona.backend_casona.models.DTO;
 
 public class RegistrationDTO {
     private String username;
