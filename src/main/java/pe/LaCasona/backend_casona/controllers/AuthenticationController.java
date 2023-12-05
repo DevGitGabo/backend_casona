@@ -15,7 +15,10 @@ public class AuthenticationController {
 
     @Autowired
     private AuthenticationService authenticationService;
-
+    @GetMapping("/")
+    public String helloAdminController() {
+        return "Person level access";
+    }
     @PostMapping("/register")
     public AplicationUser registerUser(@RequestBody RegistrationDTO body) {
         return authenticationService.registerUser(body.getUsername(), body.getPassword());
