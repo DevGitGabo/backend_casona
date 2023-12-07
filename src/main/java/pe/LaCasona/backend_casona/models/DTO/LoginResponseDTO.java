@@ -1,33 +1,39 @@
 package pe.LaCasona.backend_casona.models.DTO;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
 import pe.LaCasona.backend_casona.models.Auth.AplicationUser;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Getter
+@Setter
 public class LoginResponseDTO {
-    private AplicationUser user;
+    private UserDTO user;
     private String jwt;
 
-    public LoginResponseDTO() {
-        super();
-    }
-
-    public LoginResponseDTO(AplicationUser user, String jwt) {
-        this.user = user;
+    public LoginResponseDTO(AplicationUser applicationUser, String jwt) {
+        this.user = new UserDTO(applicationUser.getUsername(), getRoles(applicationUser));
         this.jwt = jwt;
     }
 
-    public String getJwt() {
-        return jwt;
+    private List<String> getRoles(AplicationUser applicationUser) {
+        return applicationUser.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)  // Access the authority directly
+                .collect(Collectors.toList());
     }
 
-    public AplicationUser getUser() {
-        return user;
-    }
+    @Getter
+    @Setter
+    private static class UserDTO {
+        private String username;
+        private List<String> roles;
 
-    public void setJwt(String jwt) {
-        this.jwt = jwt;
-    }
-
-    public void setUser(AplicationUser user) {
-        this.user = user;
+        public UserDTO(String username, List<String> roles) {
+            this.username = username;
+            this.roles = roles;
+        }
     }
 }

@@ -16,7 +16,7 @@ public class UsuarioEntity {
     private String email;
     @ManyToOne
     @JoinColumn(name = "id_RRHH")
-    private RRHHEntity rrhh;
+    private RrhhEntity rrhh;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "usuario_user_junction",
