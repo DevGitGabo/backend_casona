@@ -26,11 +26,11 @@ public class LoginResponseDTO {
     @Setter
     private static class UserDTO {
         private String username;
-        private List<String> roles;
+        private List<String> role;
 
         public UserDTO(String username, List<String> roles) {
             this.username = username;
-            this.roles = roles;
+            this.role = roles;
         }
     }
 }
