@@ -36,11 +36,17 @@ public class AuthenticationService {
     private UsuarioRepository usuarioRepository;
     @Autowired
     private TokenService tokenService;
-    public RegisterResponseDTO registerUser(String username, String password) {
+    public RegisterResponseDTO registerUser(String username, String password, String email) {
         RegisterResponseDTO response = new RegisterResponseDTO(true);
 
         if (userRepository.findByUsername(username).isPresent()) {
             Log.logError("El nombre de usuario ya está en uso");
+            response.setStatus(false);
+            return response;
+        }
+
+        if (usuarioRepository.findByEmail(email).isPresent()) {
+            Log.logError("El correo ya está en uso");
             response.setStatus(false);
             return response;
         }
@@ -54,6 +60,8 @@ public class AuthenticationService {
         AplicationUser newUser = new AplicationUser(0, username, encodedPassword, authorities);
         Set<AplicationUser> users = new HashSet<>();
         UsuarioEntity newUsuario = new UsuarioEntity(users);
+
+        newUsuario.setEmail(email);
 
         users.add(newUser);
 

@@ -1,10 +1,14 @@
 package pe.LaCasona.backend_casona.models.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import pe.LaCasona.backend_casona.models.Auth.AplicationUser;
 
 import java.util.Set;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "usuario")
 public class UsuarioEntity {
@@ -27,13 +31,6 @@ public class UsuarioEntity {
     public UsuarioEntity() {
     }
     public UsuarioEntity(Set<AplicationUser> usuarios) {
-        this.usuarios = usuarios;
-    }
-    public Set<AplicationUser> getUsuarios() {
-        return usuarios;
-    }
-
-    public void setUsuarios(Set<AplicationUser> usuarios) {
         this.usuarios = usuarios;
     }
 }

@@ -66,6 +66,11 @@ public class SecurityConfiguration {
                     auth.requestMatchers(AntPathRequestMatcher.antMatcher("/auth/**")).permitAll();
                     auth.requestMatchers(AntPathRequestMatcher.antMatcher("/admin/**")).hasRole("ADMIN");
                     auth.requestMatchers(AntPathRequestMatcher.antMatcher("/user/**")).hasAnyRole("ADMIN", "USER");
+                    auth.requestMatchers(AntPathRequestMatcher.antMatcher("/counter/**")).hasAnyRole("ADMIN", "COUNTER");
+                    auth.requestMatchers(AntPathRequestMatcher.antMatcher("/waiter/**")).hasAnyRole("ADMIN", "WAITER");
+                    auth.requestMatchers(AntPathRequestMatcher.antMatcher("/cashier/**")).hasAnyRole("ADMIN", "CASHIER");
+                    auth.requestMatchers(AntPathRequestMatcher.antMatcher("/delivery/**")).hasAnyRole("ADMIN", "DELIVERY");
+                    auth.requestMatchers(AntPathRequestMatcher.antMatcher("/chef/**")).hasAnyRole("ADMIN", "CHEF");
                     auth.anyRequest().authenticated();
                 });
         http.addFilterBefore(new CorsFilter(new CorsConfigurationSource() {

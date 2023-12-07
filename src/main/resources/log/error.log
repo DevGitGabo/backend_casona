@@ -2,3 +2,5 @@
 2023-12-05 11:21:41 - Invalid username or passwordorg.springframework.security.authentication.BadCredentialsException: Bad credentials
 2023-12-05 11:25:15 - Invalid username or passwordorg.springframework.security.authentication.BadCredentialsException: Bad credentials
 2023-12-05 11:25:21 - El nombre de usuario ya está en uso
+2023-12-06 23:21:16 - El nombre de usuario ya está en uso
+2023-12-06 23:21:23 - El correo ya está en uso

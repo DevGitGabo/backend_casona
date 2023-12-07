@@ -12,19 +12,16 @@ import java.util.stream.Collectors;
 @Setter
 public class LoginResponseDTO {
     private UserDTO user;
-    private String jwt;
-
-    public LoginResponseDTO(AplicationUser applicationUser, String jwt) {
+    private String token;
+    public LoginResponseDTO(AplicationUser applicationUser, String token) {
         this.user = new UserDTO(applicationUser.getUsername(), getRoles(applicationUser));
-        this.jwt = jwt;
+        this.token = token;
     }
-
     private List<String> getRoles(AplicationUser applicationUser) {
         return applicationUser.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)  // Access the authority directly
                 .collect(Collectors.toList());
     }
-
     @Getter
     @Setter
     private static class UserDTO {
