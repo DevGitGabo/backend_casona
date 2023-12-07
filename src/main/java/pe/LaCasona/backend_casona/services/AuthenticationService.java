@@ -52,9 +52,20 @@ public class AuthenticationService {
         }
 
         String encodedPassword = passwordEncoder.encode(password);
-        Role userRole = roleRepository.findByAuthority("USER").get();
-        Set<Role> authorities = new HashSet<>();
 
+        // Obtener el primer elemento del conjunto de roles
+        Role userRole = roleRepository.findByAuthority("USER").stream()
+                .findFirst()
+                .orElse(null);
+
+        if (userRole == null) {
+            // Manejar el caso en que el conjunto de roles esté vacío
+            Log.logError("No se encontró el rol 'USER'");
+            response.setStatus(false);
+            return response;
+        }
+
+        Set<Role> authorities = new HashSet<>();
         authorities.add(userRole);
 
         AplicationUser newUser = new AplicationUser(0, username, encodedPassword, authorities);

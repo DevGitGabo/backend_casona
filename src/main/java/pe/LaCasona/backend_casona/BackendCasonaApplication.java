@@ -28,7 +28,7 @@ public class BackendCasonaApplication {
                           PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository) {
 		return args -> {
 			// Admin role
-			if (roleRepository.findByAuthority("ADMIN").isPresent())
+			if (!roleRepository.findByAuthority("ADMIN").isEmpty())
 				return;
 
 			Role adminRole = roleRepository.save(new Role("ADMIN"));
@@ -41,12 +41,13 @@ public class BackendCasonaApplication {
 			UsuarioEntity adminUsuario = new UsuarioEntity(adminUsers);
 
 			adminUsers.add(admin);
+			adminUsuario.setEmail("admin@gmail.com");
 
 			userRepository.save(admin);
 			usuarioRepository.save(adminUsuario);
 
 			// User role
-			if (roleRepository.findByAuthority("USER").isPresent())
+			if (!roleRepository.findByAuthority("USER").isEmpty())
 				return;
 
 			Role userRole = roleRepository.save(new Role("USER"));
@@ -59,13 +60,14 @@ public class BackendCasonaApplication {
 			UsuarioEntity userUsuario = new UsuarioEntity(userUsers);
 
 			userUsers.add(user);
+			userUsuario.setEmail("user@gmail.com");
 
 			userRepository.save(user);
 			usuarioRepository.save(userUsuario);
 
 
 			// Cashier role
-			if (roleRepository.findByAuthority("CASHIER").isPresent())
+			if (!roleRepository.findByAuthority("CASHIER").isEmpty())
 				return;
 
 			Role cashierRole = roleRepository.save(new Role("CASHIER"));
@@ -78,12 +80,13 @@ public class BackendCasonaApplication {
 			UsuarioEntity cashierUsuario = new UsuarioEntity(cashierUsers);
 
 			cashierUsers.add(cashier);
+			cashierUsuario.setEmail("cashier@gmail.com");
 
 			userRepository.save(cashier);
 			usuarioRepository.save(cashierUsuario);
 
 			// Chef role
-			if (roleRepository.findByAuthority("CHEF").isPresent())
+			if (!roleRepository.findByAuthority("CHEF").isEmpty())
 				return;
 
 			Role chefRole = roleRepository.save(new Role("CHEF"));
@@ -96,13 +99,14 @@ public class BackendCasonaApplication {
 			UsuarioEntity chefUsuario = new UsuarioEntity(chefUsers);
 
 			chefUsers.add(chef);
+			chefUsuario.setEmail("chef@gmail.com");
 
 			userRepository.save(chef);
 			usuarioRepository.save(chefUsuario);
 
 
 			// Delivery role
-			if (roleRepository.findByAuthority("DELIVERY").isPresent())
+			if (!roleRepository.findByAuthority("DELIVERY").isEmpty())
 				return;
 
 			Role deliveryRole = roleRepository.save(new Role("DELIVERY"));
@@ -115,13 +119,14 @@ public class BackendCasonaApplication {
 			UsuarioEntity deliveryUsuario = new UsuarioEntity(deliveryUsers);
 
 			deliveryUsers.add(delivery);
+			deliveryUsuario.setEmail("delivery@gmail.com");
 
 			userRepository.save(delivery);
 			usuarioRepository.save(deliveryUsuario);
 
 
 			// Waiter role
-			if (roleRepository.findByAuthority("WAITER").isPresent())
+			if (!roleRepository.findByAuthority("WAITER").isEmpty())
 				return;
 
 			Role waiterRole = roleRepository.save(new Role("WAITER"));
@@ -134,13 +139,13 @@ public class BackendCasonaApplication {
 			UsuarioEntity waiterUsuario = new UsuarioEntity(waiterUsers);
 
 			waiterUsers.add(waiter);
+			waiterUsuario.setEmail("waiter@gmail.com");
 
 			userRepository.save(waiter);
 			usuarioRepository.save(waiterUsuario);
 
-
 			// Counter role
-			if (roleRepository.findByAuthority("COUNTER").isPresent())
+			if (!roleRepository.findByAuthority("COUNTER").isEmpty())
 				return;
 
 			Role counterRole = roleRepository.save(new Role("COUNTER"));
@@ -153,6 +158,7 @@ public class BackendCasonaApplication {
 			UsuarioEntity counterUsuario = new UsuarioEntity(counterUsers);
 
 			counterUsers.add(counter);
+			counterUsuario.setEmail("counter@gmail.com");
 
 			userRepository.save(counter);
 			usuarioRepository.save(counterUsuario);
