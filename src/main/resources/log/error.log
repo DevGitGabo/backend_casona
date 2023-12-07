@@ -9,3 +9,6 @@
 2023-12-07 00:35:07 - No se encontró el rol 'USER'
 2023-12-07 00:35:09 - No se encontró el rol 'USER'
 2023-12-07 00:35:12 - No se encontró el rol 'USER'
+2023-12-07 12:43:03 - ErrorCannot invoke "pe.LaCasona.backend_casona.models.Entity.ClienteEntity.getNumeroCompra()" because "cliente" is null
+2023-12-07 12:46:13 - ErrorCannot invoke "pe.LaCasona.backend_casona.models.Entity.ClienteEntity.getNumeroCompra()" because "cliente" is null
+2023-12-07 12:49:39 - Errororg.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing : pe.LaCasona.backend_casona.models.Entity.DetalleOrdenEntity.orden -> pe.LaCasona.backend_casona.models.Entity.OrdenEntity

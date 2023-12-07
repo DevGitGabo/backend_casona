@@ -1,11 +1,16 @@
 package pe.LaCasona.backend_casona.models.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import pe.LaCasona.backend_casona.models.DTO.Producto;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "producto")
+@Getter
+@Setter
 public class ProductoEntity {
 
     @Id
@@ -14,7 +19,8 @@ public class ProductoEntity {
     private Integer idProducto;
 
     @Column(name = "nombre_item")
-    private String nombreItem;
+    @Enumerated(EnumType.STRING)
+    private Producto producto;
 
     @Column(name = "precio_item")
     private BigDecimal precioItem;
@@ -26,7 +32,5 @@ public class ProductoEntity {
     @ManyToOne
     @JoinColumn(name = "id_categoria")
     private CategoriaEntity categoria;
-
-    // Getters and setters
 
 }

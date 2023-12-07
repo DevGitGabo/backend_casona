@@ -1,9 +1,13 @@
 package pe.LaCasona.backend_casona.models.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "categoria")
+@Getter
+@Setter
 public class CategoriaEntity {
 
     @Id
@@ -14,6 +18,10 @@ public class CategoriaEntity {
     @Column(name = "nombre_categoria")
     private String nombreCategoria;
 
-    // Getters and setters
+    public CategoriaEntity(String nombreCategoria) {
+        this.nombreCategoria = nombreCategoria;
+    }
 
+    public CategoriaEntity() {
+    }
 }

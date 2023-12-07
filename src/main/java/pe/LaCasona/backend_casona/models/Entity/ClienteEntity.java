@@ -1,9 +1,13 @@
 package pe.LaCasona.backend_casona.models.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "cliente")
+@Getter
+@Setter
 public class ClienteEntity {
 
     @Id
@@ -13,9 +17,7 @@ public class ClienteEntity {
 
     @Column(name = "primer_nombre")
     private String primerNombre;
-
     private String apellido;
-    private String email;
     private Integer telefono;
     private String direccion;
     @Column(name = "numero_compra")
@@ -26,7 +28,4 @@ public class ClienteEntity {
     @ManyToOne
     @JoinColumn(name = "id_usuario")
     private UsuarioEntity usuario;
-
-    // Getters and setters
-
 }

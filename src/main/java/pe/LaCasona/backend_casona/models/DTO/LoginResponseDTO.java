@@ -14,7 +14,7 @@ public class LoginResponseDTO {
     private UserDTO user;
     private String token;
     public LoginResponseDTO(AplicationUser applicationUser, String token) {
-        this.user = new UserDTO(applicationUser.getUsername(), getRoles(applicationUser));
+        this.user = new UserDTO(applicationUser.getUserId(), applicationUser.getUsername(), getRoles(applicationUser));
         this.token = token;
     }
     private List<String> getRoles(AplicationUser applicationUser) {
@@ -25,10 +25,13 @@ public class LoginResponseDTO {
     @Getter
     @Setter
     private static class UserDTO {
+
+        private int id;
         private String username;
         private List<String> role;
 
-        public UserDTO(String username, List<String> roles) {
+        public UserDTO(int id, String username, List<String> roles) {
+            this.id = id;
             this.username = username;
             this.role = roles;
         }

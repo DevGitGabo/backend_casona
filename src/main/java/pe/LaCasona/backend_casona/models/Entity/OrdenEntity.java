@@ -1,11 +1,17 @@
 package pe.LaCasona.backend_casona.models.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
 
 @Entity
 @Table(name = "orden")
+@Getter
+@Setter
 public class OrdenEntity {
 
     @Id
@@ -14,7 +20,7 @@ public class OrdenEntity {
     private Integer idOrden;
 
     @Column(name = "fecha_orden")
-    private Timestamp fechaOrden;
+    private Date fechaOrden;
 
     private String estado;
 
@@ -22,7 +28,7 @@ public class OrdenEntity {
     private BigDecimal montoTotal;
 
     @Column(name = "is_delivery")
-    private String isDelivery;
+    private boolean isDelivery;
 
     @ManyToOne
     @JoinColumn(name = "id_cliente")
@@ -39,7 +45,5 @@ public class OrdenEntity {
     @ManyToOne
     @JoinColumn(name = "id_metodo_pago")
     private MetodoPagoEntity metodoPago;
-
-    // Getters and setters
 
 }

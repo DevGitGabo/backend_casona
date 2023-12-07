@@ -17,6 +17,10 @@ public class PedidoDTO {
     private String correo;
     private List<ItemPedido> items;
     private MetodoPago metodoPago;
+    private int idRegistrador;
+    private String RUC;
+    @Getter
+    @Setter
     public static class ItemPedido {
         private Producto producto;
         private int cantidad;
@@ -28,7 +32,7 @@ public class PedidoDTO {
         }
     }
 
-    public PedidoDTO(String nombre, String apellidos, String direccion, String telefono, String correo, List<ItemPedido> items, MetodoPago metodoPago) {
+    public PedidoDTO(String nombre, String apellidos, String direccion, String telefono, String correo, List<ItemPedido> items, MetodoPago metodoPago, int idRegistrador, String RUC) {
         this.nombre = nombre;
         this.apellidos = apellidos;
         this.direccion = direccion;
@@ -36,14 +40,21 @@ public class PedidoDTO {
         this.correo = correo;
         this.items = items;
         this.metodoPago = metodoPago;
+        this.idRegistrador = idRegistrador;
+        this.RUC = RUC;
     }
 
-    public PedidoDTO(String nombre, String apellidos, String telefono, String correo, List<ItemPedido> items, MetodoPago metodoPago) {
+    public PedidoDTO(String nombre, String apellidos, String telefono, String correo, List<ItemPedido> items, MetodoPago metodoPago, int idRegistrador, String RUC) {
         this.nombre = nombre;
         this.apellidos = apellidos;
         this.telefono = telefono;
         this.correo = correo;
         this.items = items;
         this.metodoPago = metodoPago;
+        this.idRegistrador = idRegistrador;
+        this.RUC = RUC;
+    }
+
+    public PedidoDTO() {
     }
 }
