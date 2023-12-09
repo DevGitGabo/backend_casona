@@ -2,8 +2,7 @@ package pe.LaCasona.backend_casona.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import pe.LaCasona.backend_casona.models.DTO.PedidosDTO;
-import pe.LaCasona.backend_casona.models.DTO.UserAdmDTO;
+import pe.LaCasona.backend_casona.models.DTO.*;
 import pe.LaCasona.backend_casona.services.OrderService;
 
 import java.util.List;
@@ -14,7 +13,11 @@ import java.util.List;
 public class ChefController {
     @Autowired private OrderService orderService;
     @GetMapping("/getAll")
-    public List<PedidosDTO> getAllOrdersForDay() {
+    public List<OrdenResponseDTO> getAllOrdersForDay() {
         return orderService.getAllOrdersForDay();
+    }
+    @PutMapping("update/{id}")
+    public CEResponseDTO updateUser(@PathVariable int id, @RequestBody CambioStatusDTO newStatus) {
+        return orderService.updateStatus(id, newStatus);
     }
 }

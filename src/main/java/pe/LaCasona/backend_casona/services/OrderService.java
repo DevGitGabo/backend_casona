@@ -42,6 +42,20 @@ public class OrderService {
     private DetallePagoRepository detallePagoRepository;
     @Autowired
     private InformationDeliveryRepository informationDeliveryRepository;
+    public CEResponseDTO updateStatus(int id, CambioStatusDTO updateStatus){
+        CEResponseDTO ceResponseDTO = new CEResponseDTO();
+
+        OrdenEntity ordenActualizada = ordenRepository.findByIdOrden(id);
+        ceResponseDTO.setStatus(false);
+
+        if (updateStatus.getStatus().equals("EN_PREPARACION")||updateStatus.getStatus().equals("LISTO")){
+            ordenActualizada.setEstado(updateStatus.getStatus());
+            ceResponseDTO.setStatus(true);
+            ordenRepository.save(ordenActualizada);
+        }
+
+        return ceResponseDTO;
+    }
     public PedidoResponseDTO registerOrder(PedidoDTO order) {
 
         PedidoResponseDTO pedidoResponseDTO = new PedidoResponseDTO(true);
@@ -183,16 +197,37 @@ public class OrderService {
                 .map(this::mapToPedidosDTO)
                 .collect(Collectors.toList());
     }
-
-    public List<PedidosDTO> getAllOrdersForDay() {
+    public List<OrdenResponseDTO> getAllOrdersForDay() {
         Date today = new Date(System.currentTimeMillis());
         Date tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000L); // Añade 24 horas para incluir todo el día
 
         List<OrdenEntity> ordenEntities = ordenRepository.findByFechaOrdenBetween(today, tomorrow);
 
         return ordenEntities.stream()
-                .map(this::mapToPedidosDTO)
+                .map(this::mapToOrdersDTO)
                 .collect(Collectors.toList());
+    }
+
+    private OrdenResponseDTO mapToOrdersDTO(OrdenEntity ordenEntity) {
+        OrdenResponseDTO orden = new OrdenResponseDTO();
+
+        orden.setStatus(ordenEntity.getEstado());
+        orden.setId(ordenEntity.getIdOrden());
+        orden.setMonto_total(ordenEntity.getMontoTotal());
+
+        InformacionDeliveryEntity infoDelivery = informationDeliveryRepository.findByOrden(ordenEntity);
+        List<DetalleOrdenEntity> Ordenes = detalleOrdenRepository.findByOrden(ordenEntity);
+
+        // Mapea los elementos de ItemPedido
+        List<PedidoDTO.ItemPedido> itemPedidos = Ordenes.stream()
+                .map(detalleOrdenEntity -> new PedidoDTO.ItemPedido(
+                        detalleOrdenEntity.getProducto().getProducto(),
+                        detalleOrdenEntity.getCantidad()))
+                .collect(Collectors.toList());
+
+        orden.setItems(itemPedidos);
+
+        return orden;
     }
 
     private PedidosDTO mapToPedidosDTO(OrdenEntity ordenEntity) {
