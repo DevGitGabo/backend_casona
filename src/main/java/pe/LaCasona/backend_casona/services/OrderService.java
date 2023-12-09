@@ -49,11 +49,6 @@ public class OrderService {
     @Autowired
     private InformationDeliveryRepository informationDeliveryRepository;
 
-    public ReporteResponseDTO generateReporte(ReporteDTO parametros) {
-        ReporteResponseDTO reporte = new ReporteResponseDTO();
-        return reporte;
-    }
-
     public BoletaDTO generateBoleta(int id) {
         OrdenEntity ordenEntity = ordenRepository.findByIdOrden(id);
 

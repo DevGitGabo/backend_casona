@@ -7,15 +7,16 @@ import pe.LaCasona.backend_casona.models.DTO.PedidoResponseDTO;
 import pe.LaCasona.backend_casona.models.DTO.Reporte.ReporteDTO;
 import pe.LaCasona.backend_casona.models.DTO.Reporte.ReporteResponseDTO;
 import pe.LaCasona.backend_casona.services.OrderService;
+import pe.LaCasona.backend_casona.services.ReporteService;
 
 @RestController
 @RequestMapping("/counter")
 @CrossOrigin("*")
 public class CounterController {
     @Autowired
-    private OrderService orderService;
+    private ReporteService reporteService;
     @PostMapping("/generateReporte")
     public ReporteResponseDTO generateReporte(@RequestBody ReporteDTO body) {
-        return orderService.generateReporte(body);
+        return reporteService.generateReporte(body);
     }
 }

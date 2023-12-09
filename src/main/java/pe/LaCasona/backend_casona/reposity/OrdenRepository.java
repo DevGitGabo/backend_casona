@@ -8,7 +8,6 @@ import java.util.List;
 
 public interface OrdenRepository extends JpaRepository<OrdenEntity, Integer> {
     List<OrdenEntity> findByFechaOrdenBetween(Date startDate, Date endDate);
-    List<OrdenEntity> findAll();
     List<OrdenEntity> findAllByEstado(String status);
     OrdenEntity findByIdOrden (Integer id);
 }
