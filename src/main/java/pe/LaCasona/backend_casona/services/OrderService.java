@@ -12,8 +12,6 @@ import pe.LaCasona.backend_casona.reposity.*;
 import pe.LaCasona.backend_casona.utils.Log;
 
 import java.math.BigDecimal;
-import java.security.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -39,6 +37,8 @@ public class OrderService {
     private UserRepository userRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private DetallePagoRepository detallePagoRepository;
     public PedidoResponseDTO registerOrder(PedidoDTO order) {
 
         PedidoResponseDTO pedidoResponseDTO = new PedidoResponseDTO(true);
@@ -75,7 +75,7 @@ public class OrderService {
                     }
 
                     clienteAnonimo.setNumeroCompra(clienteAnonimo.getNumeroCompra()+1);
-                    clienteAnonimo.setNumeroRUC(order.getRUC());
+                    clienteAnonimo.setNumeroRUC(order.getRuc());
 
                     Set<Role> userRoles = roleRepository.findByAuthority("USER");
 
@@ -134,9 +134,24 @@ public class OrderService {
                 detalleOrdenRepository.save(detalleOrden);
             }
 
+            DetallePagoEntity detallePago = new DetallePagoEntity();
+            Date fechaEmision = new Date(System.currentTimeMillis());
+            long unDiaEnMillis = 24 * 60 * 60 * 1000L; // 24 horas * 60 minutos * 60 segundos * 1000 milisegundos
+            Date fechaVencimiento = new Date(fechaEmision.getTime() + unDiaEnMillis);
+
+            detallePago.setIGV(montoTotal.multiply(new BigDecimal("0.18"))); // Multiplica por 0.18 utilizando BigDecimal
+            detallePago.setFechaDeEmision(fechaEmision);
+            detallePago.setFechaDeVencimiento(fechaVencimiento);
+            detallePago.setEstadoFactura("PENDIENTE");
+            detallePago.setPagoAPlazo(false);
+            detallePago.setTotal(montoTotal);
+            detallePago.setMetodoPago(orden.getMetodoPago());
+
             orden.setMontoTotal(montoTotal);
+            orden.setDetallePago(detallePago);
 
             ordenRepository.save(orden);
+            detallePagoRepository.save(detallePago);
 
         }catch (Exception e){
             Log.logError("Error" + e.getMessage());

@@ -39,11 +39,10 @@ public class OrdenEntity {
     private CamareroEntity camarero;
 
     @ManyToOne
-    @JoinColumn(name = "id_administrador")
-    private AdministradorEntity administrador;
-
-    @ManyToOne
     @JoinColumn(name = "id_metodo_pago")
     private MetodoPagoEntity metodoPago;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_detalle_pago")
+    private DetallePagoEntity detallePago;
 }

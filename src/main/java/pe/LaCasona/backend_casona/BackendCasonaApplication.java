@@ -192,12 +192,12 @@ public class BackendCasonaApplication {
 
 			ClienteEntity clienteAnonimo = new ClienteEntity();
 
-			clienteAnonimo.setPrimerNombre("Anónimo");
-			clienteAnonimo.setApellido("Anónimo");
+			clienteAnonimo.setPrimerNombre("ANONIMO");
+			clienteAnonimo.setApellido("ANONIMO");
 			clienteAnonimo.setTelefono(0);
-			clienteAnonimo.setDireccion("Dirección Anónima");
+			clienteAnonimo.setDireccion("DIRECCION ANONIMA");
 			clienteAnonimo.setNumeroCompra(0);
-			clienteAnonimo.setNumeroRUC("RUC Anónimo");
+			clienteAnonimo.setNumeroRUC("RUC ANONIMO");
 			clienteAnonimo.setUsuario(userUsuario);
 
 			clienteRepository.save(clienteAnonimo);

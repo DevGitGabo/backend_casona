@@ -24,7 +24,6 @@ public class ClienteEntity {
     private Integer numeroCompra;
     @Column(name = "numero_RUC")
     private String numeroRUC;
-
     @ManyToOne
     @JoinColumn(name = "id_usuario")
     private UsuarioEntity usuario;
