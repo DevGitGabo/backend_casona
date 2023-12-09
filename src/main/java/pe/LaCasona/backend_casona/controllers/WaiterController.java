@@ -20,7 +20,7 @@ public class WaiterController {
     public PedidoResponseDTO registerOrder(@RequestBody PedidoDTO body) {
         return orderService.registerOrder(body);
     }
-    @GetMapping("/GetAll")
+    @GetMapping("/getAll")
     public List<PedidosDTO> getAllOrders() {
         return orderService.getAllOrders();
     }
