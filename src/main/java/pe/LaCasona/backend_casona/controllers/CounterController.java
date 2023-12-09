@@ -1,16 +1,21 @@
 package pe.LaCasona.backend_casona.controllers;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import pe.LaCasona.backend_casona.models.DTO.PedidoDTO;
+import pe.LaCasona.backend_casona.models.DTO.PedidoResponseDTO;
+import pe.LaCasona.backend_casona.models.DTO.Reporte.ReporteDTO;
+import pe.LaCasona.backend_casona.models.DTO.Reporte.ReporteResponseDTO;
+import pe.LaCasona.backend_casona.services.OrderService;
 
 @RestController
 @RequestMapping("/counter")
 @CrossOrigin("*")
 public class CounterController {
-    @GetMapping("/")
-    public String helloCounterController() {
-        return "Counter access level";
+    @Autowired
+    private OrderService orderService;
+    @PostMapping("/generateReporte")
+    public ReporteResponseDTO generateReporte(@RequestBody ReporteDTO body) {
+        return orderService.generateReporte(body);
     }
 }

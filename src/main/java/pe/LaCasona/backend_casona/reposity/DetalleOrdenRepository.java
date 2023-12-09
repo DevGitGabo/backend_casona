@@ -7,5 +7,5 @@ import pe.LaCasona.backend_casona.models.Entity.OrdenEntity;
 import java.util.List;
 
 public interface DetalleOrdenRepository extends JpaRepository<DetalleOrdenEntity, Integer> {
-    List<DetalleOrdenEntity> findByOrden(OrdenEntity orden);
+    List<DetalleOrdenEntity> findAllByOrden(OrdenEntity orden);
 }

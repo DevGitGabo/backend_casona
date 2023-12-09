@@ -3,6 +3,7 @@ package pe.LaCasona.backend_casona.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pe.LaCasona.backend_casona.models.DTO.*;
+import pe.LaCasona.backend_casona.models.DTO.Cashier.FacturaOrders;
 import pe.LaCasona.backend_casona.services.OrderService;
 
 import java.util.List;
