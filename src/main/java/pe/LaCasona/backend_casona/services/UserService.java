@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.LaCasona.backend_casona.models.Auth.AplicationUser;
 import pe.LaCasona.backend_casona.models.DTO.UserAdmDTO;
+import pe.LaCasona.backend_casona.models.Entity.CamareroEntity;
 import pe.LaCasona.backend_casona.models.Entity.UsuarioEntity;
+import pe.LaCasona.backend_casona.reposity.CamareroRepository;
 import pe.LaCasona.backend_casona.reposity.RoleRepository;
 import pe.LaCasona.backend_casona.reposity.UserRepository;
 import pe.LaCasona.backend_casona.reposity.UsuarioRepository;
@@ -25,6 +27,7 @@ public class UserService implements UserDetailsService {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private RoleRepository roleRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private CamareroRepository camareroRepository;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username)
@@ -82,6 +85,37 @@ public class UserService implements UserDetailsService {
 
         // Guardar el nuevo usuario en la base de datos
         UsuarioEntity usuarioGuardado = usuarioRepository.save(nuevoUsuario);
+
+        // Crear instancia de CamareroEntity dependiendo del tipo de usuario
+        switch (user.getRole()) {
+            case "WAITER":
+                CamareroEntity waiterCamarero = new CamareroEntity(
+                        user.getUsername() + "_Waiter",
+                        user.getUsername() + "_Waiter",
+                        usuarioGuardado
+                );
+                camareroRepository.save(waiterCamarero);
+                break;
+            case "ADMIN":
+                CamareroEntity adminCamarero = new CamareroEntity(
+                        user.getUsername() + "_Admin",
+                        user.getUsername() + "_Admin",
+                        usuarioGuardado
+                );
+                camareroRepository.save(adminCamarero);
+                break;
+            case "DELIVERY":
+                CamareroEntity deliveryCamarero = new CamareroEntity(
+                        user.getUsername() + "_Delivery",
+                        user.getUsername() + "_Delivery",
+                        usuarioGuardado
+                );
+                camareroRepository.save(deliveryCamarero);
+                break;
+            default:
+                // No hacer nada por defecto
+                break;
+        }
 
         // Devolver el UserAdmDTO correspondiente al usuario recién guardado
         return new UserAdmDTO(

@@ -1,9 +1,13 @@
 package pe.LaCasona.backend_casona.models.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "informacion_delivery")
+@Getter
+@Setter
 public class InformacionDeliveryEntity {
 
     @Id
@@ -20,7 +24,4 @@ public class InformacionDeliveryEntity {
     @ManyToOne
     @JoinColumn(name = "id_orden")
     private OrdenEntity orden;
-
-    // Getters and setters
-
 }

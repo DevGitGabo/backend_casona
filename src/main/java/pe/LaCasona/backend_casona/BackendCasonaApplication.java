@@ -28,7 +28,7 @@ public class BackendCasonaApplication {
 	CommandLineRunner run(RoleRepository roleRepository, UserRepository userRepository,
 						  PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository,
 						  MetodoPagoRepository metodoPagoRepository, ClienteRepository clienteRepository,
-						  CategoriaRepository categoriaRepository, ProductoRepository productoRepository) {
+						  CategoriaRepository categoriaRepository, ProductoRepository productoRepository,CamareroRepository camareroRepository) {
 		return args -> {
 			// Admin role
 			if (!roleRepository.findByAuthority("ADMIN").isEmpty())
@@ -48,6 +48,10 @@ public class BackendCasonaApplication {
 
 			userRepository.save(admin);
 			usuarioRepository.save(adminUsuario);
+
+			// Crear instancia de CamareroEntity para DELIVERY
+			CamareroEntity deliveryCamarero = new CamareroEntity("ADMINPRUEBAS", "ADMINPRUEBAS", adminUsuario);
+			camareroRepository.save(deliveryCamarero);
 
 			// User role
 			if (!roleRepository.findByAuthority("USER").isEmpty())
@@ -107,7 +111,6 @@ public class BackendCasonaApplication {
 			userRepository.save(chef);
 			usuarioRepository.save(chefUsuario);
 
-
 			// Delivery role
 			if (!roleRepository.findByAuthority("DELIVERY").isEmpty())
 				return;
@@ -127,6 +130,9 @@ public class BackendCasonaApplication {
 			userRepository.save(delivery);
 			usuarioRepository.save(deliveryUsuario);
 
+			// Crear instancia de CamareroEntity para DELIVERY
+			CamareroEntity deliveryCamarero2 = new CamareroEntity("primerNombreDelivery", "apellidoDelivery", deliveryUsuario);
+			camareroRepository.save(deliveryCamarero2);
 
 			// Waiter role
 			if (!roleRepository.findByAuthority("WAITER").isEmpty())
@@ -146,6 +152,10 @@ public class BackendCasonaApplication {
 
 			userRepository.save(waiter);
 			usuarioRepository.save(waiterUsuario);
+
+			// Crear instancia de CamareroEntity para WAITER
+			CamareroEntity waiterCamarero3 = new CamareroEntity("primerNombreWaiter", "apellidoWaiter", waiterUsuario);
+			camareroRepository.save(waiterCamarero3);
 
 			// Counter role
 			if (!roleRepository.findByAuthority("COUNTER").isEmpty())

@@ -13,6 +13,7 @@ import pe.LaCasona.backend_casona.utils.Log;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -39,6 +40,8 @@ public class OrderService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private DetallePagoRepository detallePagoRepository;
+    @Autowired
+    private InformationDeliveryRepository informationDeliveryRepository;
     public PedidoResponseDTO registerOrder(PedidoDTO order) {
 
         PedidoResponseDTO pedidoResponseDTO = new PedidoResponseDTO(true);
@@ -99,12 +102,17 @@ public class OrderService {
             orden.setFechaOrden(sqlDate);
             orden.setMetodoPago(metodoPago);
 
-            if (order.getDireccion() == null){
-                orden.setDelivery(false);
+            CamareroEntity camarero = camareroRepository.findByIdCamarero(order.getIdRegistrador());
+            if (camarero != null) {
+                orden.setCamarero(camarero);
 
-                CamareroEntity camarero = camareroRepository.findByIdCamarero(order.getIdRegistrador());
-                if (camarero != null) {
-                    orden.setCamarero(camarero);
+            }else {
+                if (order.getDireccion() == null){
+                    orden.setDelivery(false);
+                    orden.setCamarero(camareroRepository.findByIdCamarero(2));
+                }else {
+                    orden.setDelivery(true);
+                    orden.setCamarero(camareroRepository.findByIdCamarero(3));
                 }
             }
 
@@ -153,11 +161,70 @@ public class OrderService {
             ordenRepository.save(orden);
             detallePagoRepository.save(detallePago);
 
+            InformacionDeliveryEntity delivery = new InformacionDeliveryEntity();
+            delivery.setOrden(orden);
+            delivery.setEstadoDelivery("EN_ESPERA");
+            delivery.setDireccionDelivery(order.getDireccion());
+
+            informationDeliveryRepository.save(delivery);
+
         }catch (Exception e){
             Log.logError("Error" + e.getMessage());
             pedidoResponseDTO.setStatus(false);
         };
 
         return pedidoResponseDTO;
+    }
+
+    public List<PedidosDTO> getAllOrders() {
+        List<OrdenEntity> ordenEntities = ordenRepository.findAll();
+
+        return ordenEntities.stream()
+                .map(this::mapToPedidosDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<PedidosDTO> getAllOrdersForDay() {
+        Date today = new Date(System.currentTimeMillis());
+        Date tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000L); // Añade 24 horas para incluir todo el día
+
+        List<OrdenEntity> ordenEntities = ordenRepository.findByFechaOrdenBetween(today, tomorrow);
+
+        return ordenEntities.stream()
+                .map(this::mapToPedidosDTO)
+                .collect(Collectors.toList());
+    }
+
+    private PedidosDTO mapToPedidosDTO(OrdenEntity ordenEntity) {
+        PedidosDTO pedidoDTO = new PedidosDTO();
+
+        // Asigna los valores de la entidad a DTO
+        pedidoDTO.setNombre(ordenEntity.getCliente().getPrimerNombre());
+        pedidoDTO.setApellidos(ordenEntity.getCliente().getApellido());
+
+        InformacionDeliveryEntity infoDelivery = informationDeliveryRepository.findByOrden(ordenEntity);
+
+        pedidoDTO.setDireccion(infoDelivery.getDireccionDelivery());
+        pedidoDTO.setTelefono(String.valueOf(ordenEntity.getCliente().getTelefono()));
+        pedidoDTO.setCorreo(ordenEntity.getCliente().getUsuario().getEmail());
+        pedidoDTO.setMetodoPago(ordenEntity.getMetodoPago().getNombre());
+        pedidoDTO.setNameUser(ordenEntity.getCamarero().getPrimerNombre());
+        pedidoDTO.setApellidoUser(ordenEntity.getCamarero().getApellido());
+        pedidoDTO.setRuc(ordenEntity.getCliente().getNumeroRUC());
+        pedidoDTO.setNameCliente(ordenEntity.getCliente().getPrimerNombre());
+        pedidoDTO.setApellidoCliente(ordenEntity.getCliente().getApellido());
+
+        List<DetalleOrdenEntity> Ordenes = detalleOrdenRepository.findByOrden(ordenEntity);
+
+        // Mapea los elementos de ItemPedido
+        List<PedidoDTO.ItemPedido> itemPedidos = Ordenes.stream()
+                .map(detalleOrdenEntity -> new PedidoDTO.ItemPedido(
+                        detalleOrdenEntity.getProducto().getProducto(),
+                        detalleOrdenEntity.getCantidad()))
+                .collect(Collectors.toList());
+
+        pedidoDTO.setItems(itemPedidos);
+
+        return pedidoDTO;
     }
 }
