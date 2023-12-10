@@ -18,6 +18,7 @@ import pe.LaCasona.backend_casona.reposity.ProductoRepository;
 import pe.LaCasona.backend_casona.utils.Log;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -44,19 +45,440 @@ public class ReporteService {
             reporte.setDatosGenerales(datosGenerales);
             List<ProductoReporteDTO> productos = generarReporteTodosProductos();
             reporte.setProductos(productos);
-        }else if (parametros.getProducto() != null && !parametros.getProducto().isEmpty()) {
-            // Se proporcionaron productos específicos, generamos un informe para esos productos
-            List<ProductoReporteDTO> productos = generarReporteProductosEspecificos(parametros.getProducto());
+        } else if (parametros.getProducto() != null && !parametros.getProducto().isEmpty()) {
+            // Se proporcionaron productos específicos
+            List<ProductoEntity> productosEspecificos = obtenerProductosDesdeDTO(parametros.getProducto());
+
+            if (parametros.getFechaInicio() != null && parametros.getFechaCulminacion() != null) {
+                // Se proporcionaron fechas de inicio y culminación, generamos un informe filtrado por fechas y productos
+                DatosGenerales datosGenerales = generarDatosGeneralesFiltradoPorFechasYProductos(
+                        parametros.getFechaInicio(),
+                        parametros.getFechaCulminacion(),
+                        productosEspecificos
+                );
+                reporte.setDatosGenerales(datosGenerales);
+
+                List<ProductoReporteDTO> productos = generarReporteFiltradoPorFechasYProductos(
+                        parametros.getFechaInicio(),
+                        parametros.getFechaCulminacion(),
+                        parametros.getProducto()
+                );
+                reporte.setProductos(productos);
+            } else {
+                // No se proporcionaron fechas, generamos un informe solo para productos específicos
+                DatosGenerales datosGenerales = generarDatosGeneralesProductosEspecificos(productosEspecificos);
+                reporte.setDatosGenerales(datosGenerales);
+
+                List<ProductoReporteDTO> productos = generarReporteProductosEspecificos(parametros.getProducto());
+                reporte.setProductos(productos);
+            }
+        } else if (parametros.getFechaInicio() != null && parametros.getFechaCulminacion() != null) {
+            // Se proporcionaron solo fechas de inicio y culminación, generamos un informe filtrado por fechas
+            List<ProductoReporteDTO> productos = generarReporteFiltradoPorFechas(
+                    parametros.getFechaInicio(),
+                    parametros.getFechaCulminacion()
+            );
             reporte.setProductos(productos);
-        }else if (parametros.getFechaInicio() != null && parametros.getFechaCulminacion() != null) {
-            // Se proporcionaron fechas de inicio y culminación, generamos un informe filtrado por fechas
-            List<ProductoReporteDTO> productos = generarReporteFiltradoPorFechas(parametros.getFechaInicio(), parametros.getFechaCulminacion());
-            reporte.setProductos(productos);
-            DatosGenerales datosGenerales = generarDatosGeneralesFiltradoPorFechas(parametros.getFechaInicio(), parametros.getFechaCulminacion());
+
+            DatosGenerales datosGenerales = generarDatosGeneralesFiltradoPorFechas(
+                    parametros.getFechaInicio(),
+                    parametros.getFechaCulminacion()
+            );
             reporte.setDatosGenerales(datosGenerales);
         }
 
         return reporte;
+    }
+
+    public List<ProductoReporteDTO> generarReporteFiltradoPorFechasYProductos(
+            String fechaInicio, String fechaCulminacion, List<Producto> productosEspecificos) {
+        // Convertir las fechas de texto a objetos Date
+        Date fechaInicioObj = java.sql.Date.valueOf(LocalDate.parse(fechaInicio));
+        Date fechaCulminacionObj = java.sql.Date.valueOf(LocalDate.parse(fechaCulminacion));
+
+        // Obtener todas las órdenes en el rango de fechas
+        List<OrdenEntity> ordenesEnRango = ordenRepository.findByFechaOrdenBetween(
+                fechaInicioObj,
+                fechaCulminacionObj
+        );
+
+        // Filtrar los detalles de orden relacionados con las órdenes en el rango de fechas
+        List<DetalleOrdenEntity> detallesOrdenEnRango = detalleOrdenRepository.findByOrdenIn(ordenesEnRango);
+
+        // Filtrar los detalles de orden por productos específicos
+        List<DetalleOrdenEntity> detallesOrdenConProductosEspecificos = detallesOrdenEnRango.stream()
+                .filter(detalle -> productosEspecificos.contains(detalle.getProducto().getProducto()))
+                .collect(Collectors.toList());
+
+        // Agrupar por producto y sumar las cantidades
+        Map<Integer, Integer> ventasPorProducto = detallesOrdenConProductosEspecificos.stream()
+                .collect(Collectors.groupingBy(
+                        detalle -> detalle.getProducto().getIdProducto(),
+                        Collectors.summingInt(DetalleOrdenEntity::getCantidad)
+                ));
+
+        // Crear la lista de ProductoReporteDTO a partir de las ventas por producto
+        List<ProductoReporteDTO> reporteProductos = ventasPorProducto.entrySet().stream()
+                .map(entry -> {
+                    Integer idProducto = entry.getKey();
+                    Integer cantidadVendida = entry.getValue();
+
+                    // Obtener información adicional del producto
+                    ProductoEntity productoEntity = productoRepository.findById(idProducto).orElse(null);
+
+                    if (productoEntity != null) {
+                        String nombreProducto = productoEntity.getProducto().toString();
+                        BigDecimal precioUnitario = productoEntity.getPrecioItem();
+                        BigDecimal gananciaTotal = precioUnitario.multiply(BigDecimal.valueOf(cantidadVendida));
+
+                        // Obtener las ventas por mes del producto
+                        Map<String, Integer> ventasPorMes = calcularVentasPorMesParaProducto(
+                                detallesOrdenConProductosEspecificos,
+                                productoEntity
+                        );
+
+                        ProductoReporteDTO productoReporteDTO = new ProductoReporteDTO();
+                        productoReporteDTO.setNombreProducto(nombreProducto);
+                        productoReporteDTO.setCantidadVendida(cantidadVendida);
+                        productoReporteDTO.setGananciaTotal(gananciaTotal);
+                        productoReporteDTO.setVentasPorMesProducto(ventasPorMes);
+                        productoReporteDTO.setPrecioUnitario(productoEntity.getPrecioItem());
+
+                        return productoReporteDTO;
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        return reporteProductos;
+    }
+
+    private DatosGenerales generarDatosGeneralesFiltradoPorFechasYProductos(
+            String fechaInicio, String fechaCulminacion, List<ProductoEntity> productosEspecificos) {
+        // Convertir las fechas de texto a objetos Date
+        Date fechaInicioObj = java.sql.Date.valueOf(LocalDate.parse(fechaInicio));
+        Date fechaCulminacionObj = java.sql.Date.valueOf(LocalDate.parse(fechaCulminacion));
+
+        // Obtener todas las órdenes en el rango de fechas
+        List<OrdenEntity> ordenesEnRango = ordenRepository.findByFechaOrdenBetween(
+                fechaInicioObj,
+                fechaCulminacionObj
+        );
+
+        // Filtrar los detalles de orden relacionados con las órdenes en el rango de fechas
+        List<DetalleOrdenEntity> detallesOrdenEnRango = detalleOrdenRepository.findByOrdenIn(ordenesEnRango);
+
+        // Filtrar los detalles de orden por productos específicos
+        List<DetalleOrdenEntity> detallesOrdenConProductosEspecificos = detallesOrdenEnRango.stream()
+                .filter(detalle -> productosEspecificos.contains(detalle.getProducto()))
+                .collect(Collectors.toList());
+
+        // Agrupar detalles de orden por orden y sumar montos correspondientes
+        Map<OrdenEntity, BigDecimal> montoPorOrden = detallesOrdenConProductosEspecificos.stream()
+                .collect(Collectors.groupingBy(
+                        DetalleOrdenEntity::getOrden,
+                        Collectors.mapping(detalle -> detalle.getProducto().getPrecioItem().multiply(BigDecimal.valueOf(detalle.getCantidad())), Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
+                ));
+
+        // Calcular total de ventas y ganancias
+        Integer totaleVentas = detallesOrdenConProductosEspecificos.stream()
+                .map(DetalleOrdenEntity::getCantidad)
+                .reduce(0, Integer::sum);
+
+        BigDecimal totalVentas = BigDecimal.valueOf(totaleVentas);
+
+        BigDecimal totalGanancias = detallesOrdenConProductosEspecificos.stream()
+                .map(detalle -> detalle.getProducto().getPrecioItem().multiply(BigDecimal.valueOf(detalle.getCantidad())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Calcular ventas por mes y ganancias por mes
+        Map<String, BigDecimal> ventasPorMes = calcularVentasPorMes(detallesOrdenConProductosEspecificos);
+        Map<String, BigDecimal> gananciasPorMes = calcularGananciasPorMesAD(detallesOrdenConProductosEspecificos,productosEspecificos);
+
+        // Calcular producto más vendido y más rentable
+        ProductoReporteDTO productoMasVendido = calcularProductoMasVendidoFiltradoPorFechasYProductos(ordenesEnRango, productosEspecificos);
+        ProductoReporteDTO productoMasRentable = calcularProductoMasRentableFiltradoPorFechasYProductos(ordenesEnRango, productosEspecificos);
+
+        DatosGenerales datosGenerales = new DatosGenerales();
+        datosGenerales.setTotalVentas(totalVentas);
+        datosGenerales.setTotalGanancias(totalGanancias);
+        datosGenerales.setVentasPorMes(ventasPorMes);
+        datosGenerales.setGananciasPorMes(gananciasPorMes);
+        datosGenerales.setProductoMasVendido(productoMasVendido);
+        datosGenerales.setProductoMasRentable(productoMasRentable);
+
+        return datosGenerales;
+    }
+
+    private ProductoReporteDTO calcularProductoMasVendidoFiltradoPorFechasYProductos(
+            List<OrdenEntity> ordenesEnRango, List<ProductoEntity> productosEspecificos) {
+        // Obtener todos los detalles de orden en el rango de fechas
+        List<DetalleOrdenEntity> detallesOrdenEnRango = detalleOrdenRepository.findByOrdenIn(ordenesEnRango);
+
+        // Filtrar los detalles por productos específicos
+        List<DetalleOrdenEntity> detallesOrdenConProductosEspecificos = detallesOrdenEnRango.stream()
+                .filter(detalle -> productosEspecificos.contains(detalle.getProducto()))
+                .collect(Collectors.toList());
+
+        // Agrupar por producto y sumar las cantidades
+        Map<Integer, Integer> ventasPorProducto = detallesOrdenConProductosEspecificos.stream()
+                .collect(Collectors.groupingBy(
+                        detalle -> detalle.getProducto().getIdProducto(),
+                        Collectors.summingInt(DetalleOrdenEntity::getCantidad)
+                ));
+
+        // Encontrar el producto con más ventas
+        Map.Entry<Integer, Integer> productoMasVendidoEntry = ventasPorProducto.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .orElse(null);
+
+        if (productoMasVendidoEntry != null) {
+            Integer idProductoMasVendido = productoMasVendidoEntry.getKey();
+            Integer cantidadMasVendida = productoMasVendidoEntry.getValue();
+
+            // Obtener información adicional del producto
+            ProductoEntity productoMasVendidoEntity = productoRepository.findById(idProductoMasVendido).orElse(null);
+
+            if (productoMasVendidoEntity != null) {
+                String nombreProductoMasVendido = productoMasVendidoEntity.getProducto().toString();
+                BigDecimal precioUnitario = productoMasVendidoEntity.getPrecioItem();
+
+                BigDecimal gananciaTotal = precioUnitario.multiply(BigDecimal.valueOf(cantidadMasVendida));
+
+                // Obtener las ventas por mes del producto
+                Map<String, Integer> ventasPorMes = calcularVentasPorMesParaProducto(
+                        detallesOrdenConProductosEspecificos,
+                        productoMasVendidoEntity
+                );
+
+                ProductoReporteDTO productoMasVendido = new ProductoReporteDTO();
+                productoMasVendido.setNombreProducto(nombreProductoMasVendido);
+                productoMasVendido.setCantidadVendida(cantidadMasVendida);
+                productoMasVendido.setGananciaTotal(gananciaTotal);
+                productoMasVendido.setVentasPorMesProducto(ventasPorMes);
+                productoMasVendido.setPrecioUnitario(precioUnitario);
+
+                return productoMasVendido;
+            }
+        }
+
+        return null;
+    }
+
+    private ProductoReporteDTO calcularProductoMasRentableFiltradoPorFechasYProductos(
+            List<OrdenEntity> ordenesEnRango, List<ProductoEntity> productosEspecificos) {
+        // Obtener todos los detalles de orden en el rango de fechas
+        List<DetalleOrdenEntity> detallesOrdenEnRango = detalleOrdenRepository.findByOrdenIn(ordenesEnRango);
+
+        // Filtrar los detalles por productos específicos
+        List<DetalleOrdenEntity> detallesOrdenConProductosEspecificos = detallesOrdenEnRango.stream()
+                .filter(detalle -> productosEspecificos.contains(detalle.getProducto()))
+                .collect(Collectors.toList());
+
+        // Agrupar por producto y sumar las ganancias
+        Map<Integer, BigDecimal> gananciasPorProducto = detallesOrdenConProductosEspecificos.stream()
+                .collect(Collectors.groupingBy(
+                        detalle -> detalle.getProducto().getIdProducto(),
+                        Collectors.mapping(
+                                detalle -> {
+                                    BigDecimal precioUnitario = detalle.getProducto().getPrecioItem();
+                                    return precioUnitario.multiply(BigDecimal.valueOf(detalle.getCantidad()));
+                                },
+                                Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
+                        )
+                ));
+
+        // Encontrar el producto más rentable
+        Map.Entry<Integer, BigDecimal> productoMasRentableEntry = gananciasPorProducto.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .orElse(null);
+
+        if (productoMasRentableEntry != null) {
+            Integer idProductoMasRentable = productoMasRentableEntry.getKey();
+            BigDecimal gananciaTotal = productoMasRentableEntry.getValue();
+
+            // Obtener información adicional del producto
+            ProductoEntity productoMasRentableEntity = productoRepository.findById(idProductoMasRentable).orElse(null);
+
+            if (productoMasRentableEntity != null) {
+                String nombreProductoMasRentable = productoMasRentableEntity.getProducto().toString();
+                Integer cantidadVendida = detallesOrdenConProductosEspecificos.stream()
+                        .filter(detalle -> detalle.getProducto().getIdProducto().equals(idProductoMasRentable))
+                        .mapToInt(DetalleOrdenEntity::getCantidad)
+                        .sum();
+
+                // Obtener las ventas por mes del producto
+                Map<String, Integer> ventasPorMes = calcularVentasPorMesParaProducto(
+                        detallesOrdenConProductosEspecificos,
+                        productoMasRentableEntity
+                );
+
+                ProductoReporteDTO productoMasRentable = new ProductoReporteDTO();
+                productoMasRentable.setNombreProducto(nombreProductoMasRentable);
+                productoMasRentable.setCantidadVendida(cantidadVendida);
+                productoMasRentable.setGananciaTotal(gananciaTotal);
+                productoMasRentable.setVentasPorMesProducto(ventasPorMes);
+                productoMasRentable.setPrecioUnitario(productoMasRentableEntity.getPrecioItem());
+
+                return productoMasRentable;
+            }
+        }
+
+        return null;
+    }
+
+    private Map<String, Integer> calcularVentasPorMesParaProducto(
+            List<DetalleOrdenEntity> detallesOrden, ProductoEntity producto) {
+        // Filtrar los detalles de orden relacionados con el producto específico
+        List<DetalleOrdenEntity> detallesOrdenParaProducto = detallesOrden.stream()
+                .filter(detalle -> detalle.getProducto().equals(producto))
+                .collect(Collectors.toList());
+
+        // Agrupar por mes y sumar las cantidades
+        return detallesOrdenParaProducto.stream()
+                .collect(Collectors.groupingBy(
+                        detalle -> obtenerMesDesdeFecha(detalle.getOrden().getFechaOrden()),
+                        Collectors.mapping(DetalleOrdenEntity::getCantidad, Collectors.reducing(0, Integer::sum))
+                ));
+    }
+
+    private String obtenerMesDesdeFecha(Date fecha) {
+        // Obtener el mes desde la fecha (puedes ajustar el formato según tus necesidades)
+        return new SimpleDateFormat("MM/yyyy").format(fecha);
+    }
+
+    private DatosGenerales generarDatosGeneralesProductosEspecificos(List<ProductoEntity> productosEspecificos) {
+        // Obtener todas las órdenes relacionadas con los productos específicos
+        List<OrdenEntity> ordenesRelacionadas = obtenerOrdenesRelacionadasConProductos(productosEspecificos);
+
+        // Obtener los detalles de orden relacionados con las órdenes
+        List<DetalleOrdenEntity> detallesOrdenRelacionados = detalleOrdenRepository.findByOrdenIn(ordenesRelacionadas);
+
+        // Calcular total de ventas y ganancias solo para las órdenes relacionadas
+        Integer totaleVentas = detallesOrdenRelacionados.stream()
+                .map(DetalleOrdenEntity::getCantidad)
+                .reduce(0, Integer::sum);
+
+        BigDecimal totalVentas = BigDecimal.valueOf(totaleVentas);
+
+        BigDecimal totalGanancias = ordenesRelacionadas.stream().map(orden -> orden.getDetallePago().getTotal()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Calcular ventas por mes y ganancias por mes solo para las órdenes relacionadas
+        Map<String, BigDecimal> ventasPorMes = calcularVentasPorMes(detallesOrdenRelacionados);
+        Map<String, BigDecimal> gananciasPorMes = calcularGananciasPorMes(ordenesRelacionadas);
+
+        // Calcular producto más vendido y más rentable solo para las órdenes relacionadas
+        ProductoReporteDTO productoMasVendido = calcularProductoMasVendidoFiltradoPorProductos(ordenesRelacionadas);
+        ProductoReporteDTO productoMasRentable = calcularProductoMasRentableFiltradoPorProductos(ordenesRelacionadas);
+
+        DatosGenerales datosGenerales = new DatosGenerales();
+        datosGenerales.setTotalVentas(totalVentas);
+        datosGenerales.setTotalGanancias(totalGanancias);
+        datosGenerales.setVentasPorMes(ventasPorMes);
+        datosGenerales.setGananciasPorMes(gananciasPorMes);
+        datosGenerales.setProductoMasVendido(productoMasVendido);
+        datosGenerales.setProductoMasRentable(productoMasRentable);
+
+        return datosGenerales;
+    }
+
+    private List<OrdenEntity> obtenerOrdenesRelacionadasConProductos(List<ProductoEntity> productosEspecificos) {
+        // Obtener los IDs de los productos específicos
+        List<Integer> idsProductosEspecificos = productosEspecificos.stream()
+                .map(ProductoEntity::getIdProducto)
+                .collect(Collectors.toList());
+
+        // Obtener todas las órdenes que contienen los productos específicos
+        List<DetalleOrdenEntity> detallesOrdenRelacionados = detalleOrdenRepository.findByProductoIn(productosEspecificos);
+        List<OrdenEntity> ordenesRelacionadas = detallesOrdenRelacionados.stream()
+                .map(DetalleOrdenEntity::getOrden)
+                .distinct() // Eliminar duplicados
+                .collect(Collectors.toList());
+
+        return ordenesRelacionadas;
+    }
+
+    private ProductoReporteDTO calcularProductoMasVendidoFiltradoPorProductos(List<OrdenEntity> ordenesRelacionadas) {
+        // Obtener todos los detalles de orden relacionados con las órdenes
+        List<DetalleOrdenEntity> detallesOrdenRelacionados = detalleOrdenRepository.findByOrdenIn(ordenesRelacionadas);
+
+        // Agrupar por producto y sumar las cantidades
+        Map<Integer, Integer> ventasPorProducto = detallesOrdenRelacionados.stream()
+                .collect(Collectors.groupingBy(
+                        detalle -> detalle.getProducto().getIdProducto(),
+                        Collectors.summingInt(DetalleOrdenEntity::getCantidad)
+                ));
+
+        // Encontrar el producto con más ventas
+        Map.Entry<Integer, Integer> productoMasVendidoEntry = ventasPorProducto.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .orElse(null);
+
+        if (productoMasVendidoEntry != null) {
+            Integer idProductoMasVendido = productoMasVendidoEntry.getKey();
+            Integer cantidadMasVendida = productoMasVendidoEntry.getValue();
+
+            // Obtener información adicional del producto
+            ProductoEntity productoMasVendidoEntity = productoRepository.findById(idProductoMasVendido).orElse(null);
+
+            if (productoMasVendidoEntity != null) {
+                String nombreProductoMasVendido = String.valueOf(productoMasVendidoEntity.getProducto());
+                BigDecimal precioUnitario = productoMasVendidoEntity.getPrecioItem();
+
+                BigDecimal gananciaTotal = precioUnitario.multiply(BigDecimal.valueOf(cantidadMasVendida));
+
+                // Obtener las ventas por mes del producto
+                Map<String, Integer> ventasPorMesProducto = obtenerVentasPorMesProducto(productoMasVendidoEntity);
+
+                return new ProductoReporteDTO(nombreProductoMasVendido, cantidadMasVendida, gananciaTotal, precioUnitario, ventasPorMesProducto);
+            }
+        }
+
+        return null;
+    }
+
+    private ProductoReporteDTO calcularProductoMasRentableFiltradoPorProductos(List<OrdenEntity> ordenesRelacionadas) {
+        // Obtener todos los detalles de orden relacionados con las órdenes
+        List<DetalleOrdenEntity> detallesOrdenRelacionados = detalleOrdenRepository.findByOrdenIn(ordenesRelacionadas);
+
+        // Agrupar por producto y sumar las ganancias y las cantidades vendidas
+        Map<Integer, BigDecimal> gananciasPorProducto = new HashMap<>();
+        Map<Integer, Integer> cantidadesVendidasPorProducto = new HashMap<>();
+
+        detallesOrdenRelacionados.forEach(detalle -> {
+            Integer idProducto = detalle.getProducto().getIdProducto();
+            BigDecimal precioUnitario = detalle.getProducto().getPrecioItem();
+
+            gananciasPorProducto.merge(idProducto, precioUnitario.multiply(BigDecimal.valueOf(detalle.getCantidad())), BigDecimal::add);
+            cantidadesVendidasPorProducto.merge(idProducto, detalle.getCantidad(), Integer::sum);
+        });
+
+        // Encontrar el producto con más ganancias
+        Map.Entry<Integer, BigDecimal> productoMasRentableEntry = gananciasPorProducto.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .orElse(null);
+
+        if (productoMasRentableEntry != null) {
+            Integer idProductoMasRentable = productoMasRentableEntry.getKey();
+            BigDecimal gananciaTotal = productoMasRentableEntry.getValue();
+            Integer cantidadVendida = cantidadesVendidasPorProducto.get(idProductoMasRentable);
+
+            // Obtener información adicional del producto
+            ProductoEntity productoMasRentableEntity = productoRepository.findById(idProductoMasRentable).orElse(null);
+
+            if (productoMasRentableEntity != null) {
+                String nombreProductoMasRentable = productoMasRentableEntity.getProducto().toString();
+                BigDecimal precioUnitario = productoMasRentableEntity.getPrecioItem();
+
+                // Obtener las ventas por mes del producto
+                Map<String, Integer> ventasPorMesProducto = obtenerVentasPorMesProducto(productoMasRentableEntity);
+
+                return new ProductoReporteDTO(nombreProductoMasRentable, cantidadVendida, gananciaTotal, precioUnitario, ventasPorMesProducto);
+            }
+        }
+
+        return null;
     }
 
     private DatosGenerales generarDatosGeneralesFiltradoPorFechas(String fechaInicio, String fechaCulminacion) {
@@ -70,12 +492,21 @@ public class ReporteService {
                 fechaCulminacionObj
         );
 
-        // Calcular total de ventas y ganancias solo para las órdenes en el rango de fechas
-        BigDecimal totalVentas = ordenesEnRango.stream().map(OrdenEntity::getMontoTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<DetalleOrdenEntity> dOrdenesEnrango = new ArrayList<>();
+        for (OrdenEntity orden : ordenesEnRango) {
+            List<DetalleOrdenEntity> detallesOrdenDeLaOrden = detalleOrdenRepository.findAllByOrden(orden);
+            dOrdenesEnrango.addAll(detallesOrdenDeLaOrden);
+        }
+
+        Integer totaleVentas = dOrdenesEnrango.stream()
+                .map(DetalleOrdenEntity::getCantidad)
+                .reduce(0, Integer::sum);
+
+        BigDecimal totalVentas = BigDecimal.valueOf(totaleVentas);
         BigDecimal totalGanancias = ordenesEnRango.stream().map(orden -> orden.getDetallePago().getTotal()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Calcular ventas por mes y ganancias por mes solo para las órdenes en el rango de fechas
-        Map<String, BigDecimal> ventasPorMes = calcularVentasPorMes(ordenesEnRango);
+        Map<String, BigDecimal> ventasPorMes = calcularVentasPorMes(dOrdenesEnrango);
         Map<String, BigDecimal> gananciasPorMes = calcularGananciasPorMes(ordenesEnRango);
 
         // Calcular producto más vendido y más rentable solo para las órdenes en el rango de fechas
@@ -97,15 +528,17 @@ public class ReporteService {
         // Obtener todos los detalles de orden en el rango de fechas
         List<DetalleOrdenEntity> detallesOrdenEnRango = detalleOrdenRepository.findByOrdenIn(ordenesEnRango);
 
-        // Agrupar por producto y sumar las ganancias
-        Map<Integer, BigDecimal> gananciasPorProducto = detallesOrdenEnRango.stream()
-                .collect(Collectors.groupingBy(
-                        detalle -> detalle.getProducto().getIdProducto(),
-                        Collectors.mapping(detalle -> {
-                            BigDecimal precioUnitario = detalle.getProducto().getPrecioItem();
-                            return precioUnitario.multiply(BigDecimal.valueOf(detalle.getCantidad()));
-                        }, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
-                ));
+        // Agrupar por producto y sumar las ganancias y las cantidades vendidas
+        Map<Integer, BigDecimal> gananciasPorProducto = new HashMap<>();
+        Map<Integer, Integer> cantidadesVendidasPorProducto = new HashMap<>();
+
+        detallesOrdenEnRango.forEach(detalle -> {
+            Integer idProducto = detalle.getProducto().getIdProducto();
+            BigDecimal precioUnitario = detalle.getProducto().getPrecioItem();
+
+            gananciasPorProducto.merge(idProducto, precioUnitario.multiply(BigDecimal.valueOf(detalle.getCantidad())), BigDecimal::add);
+            cantidadesVendidasPorProducto.merge(idProducto, detalle.getCantidad(), Integer::sum);
+        });
 
         // Encontrar el producto con más ganancias
         Map.Entry<Integer, BigDecimal> productoMasRentableEntry = gananciasPorProducto.entrySet().stream()
@@ -115,6 +548,7 @@ public class ReporteService {
         if (productoMasRentableEntry != null) {
             Integer idProductoMasRentable = productoMasRentableEntry.getKey();
             BigDecimal gananciaTotal = productoMasRentableEntry.getValue();
+            Integer cantidadVendida = cantidadesVendidasPorProducto.get(idProductoMasRentable);
 
             // Obtener información adicional del producto
             ProductoEntity productoMasRentableEntity = productoRepository.findById(idProductoMasRentable).orElse(null);
@@ -126,7 +560,7 @@ public class ReporteService {
                 // Obtener las ventas por mes del producto
                 Map<String, Integer> ventasPorMesProducto = obtenerVentasPorMesProducto(productoMasRentableEntity);
 
-                return new ProductoReporteDTO(nombreProductoMasRentable, 0, precioUnitario, gananciaTotal, ventasPorMesProducto);
+                return new ProductoReporteDTO(nombreProductoMasRentable, cantidadVendida,gananciaTotal, precioUnitario , ventasPorMesProducto);
             }
         }
 
@@ -333,14 +767,18 @@ public class ReporteService {
 
         // Obtener todas las órdenes
         List<OrdenEntity> ordenes = ordenRepository.findAll();
+        List<DetalleOrdenEntity> detallesOrdenes = detalleOrdenRepository.findAll();
 
         // Calcular total de ventas y ganancias
-        BigDecimal totalVentas = ordenes.stream().map(OrdenEntity::getMontoTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalVentas = detallesOrdenes.stream()
+                .map(detalle -> BigDecimal.valueOf(detalle.getCantidad()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         BigDecimal totalGanancias = ordenes.stream().map(OrdenEntity::getDetallePago)
                 .map(DetallePagoEntity::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Calcular ventas por mes y ganancias por mes
-        Map<String, BigDecimal> ventasPorMes = calcularVentasPorMes(ordenes);
+        Map<String, BigDecimal> ventasPorMes = calcularVentasPorMes(detallesOrdenes);
         Map<String, BigDecimal> gananciasPorMes = calcularGananciasPorMes(ordenes);
 
         // Calcular producto más vendido y más rentable
@@ -357,19 +795,37 @@ public class ReporteService {
         return datosGenerales;
     }
 
-    private Map<String, BigDecimal> calcularVentasPorMes(List<OrdenEntity> ordenes) {
+    private Map<String, BigDecimal> calcularVentasPorMes(List<DetalleOrdenEntity> detallesOrden) {
         Map<String, BigDecimal> ventasPorMes = new HashMap<>();
 
-        for (OrdenEntity orden : ordenes) {
-            YearMonth yearMonth = YearMonth.from(orden.getFechaOrden().toLocalDate());
+        for (DetalleOrdenEntity detalle : detallesOrden) {
+            YearMonth yearMonth = YearMonth.from(detalle.getOrden().getFechaOrden().toLocalDate());
 
             BigDecimal totalVentas = ventasPorMes.getOrDefault(yearMonth.toString(), BigDecimal.ZERO);
-            totalVentas = totalVentas.add(orden.getMontoTotal());
+            totalVentas = totalVentas.add(BigDecimal.valueOf(detalle.getCantidad()));
 
             ventasPorMes.put(yearMonth.toString(), totalVentas);
         }
 
         return ventasPorMes;
+    }
+    private Map<String, BigDecimal> calcularGananciasPorMesAD(List<DetalleOrdenEntity> detallesOrden, List<ProductoEntity> productosEspecificos) {
+        Map<String, BigDecimal> gananciasPorMes = new HashMap<>();
+
+        for (DetalleOrdenEntity detalle : detallesOrden) {
+            YearMonth yearMonth = YearMonth.from(detalle.getOrden().getFechaOrden().toLocalDate());
+
+            if (productosEspecificos.contains(detalle.getProducto())) {
+                BigDecimal gananciasDetalle = detalle.getProducto().getPrecioItem().multiply(BigDecimal.valueOf(detalle.getCantidad()));
+
+                BigDecimal gananciasMes = gananciasPorMes.getOrDefault(yearMonth.toString(), BigDecimal.ZERO);
+                gananciasMes = gananciasMes.add(gananciasDetalle);
+
+                gananciasPorMes.put(yearMonth.toString(), gananciasMes);
+            }
+        }
+
+        return gananciasPorMes;
     }
 
     private Map<String, BigDecimal> calcularGananciasPorMes(List<OrdenEntity> ordenes) {
@@ -449,15 +905,17 @@ public class ReporteService {
         // Obtener todos los detalles de orden
         List<DetalleOrdenEntity> detallesOrden = detalleOrdenRepository.findAll();
 
-        // Agrupar por producto y sumar las ganancias
-        Map<Integer, BigDecimal> gananciasPorProducto = detallesOrden.stream()
-                .collect(Collectors.groupingBy(
-                        detalle -> detalle.getProducto().getIdProducto(),
-                        Collectors.mapping(detalle -> {
-                            BigDecimal precioUnitario = detalle.getProducto().getPrecioItem();
-                            return precioUnitario.multiply(BigDecimal.valueOf(detalle.getCantidad()));
-                        }, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
-                ));
+        // Agrupar por producto y sumar las ganancias y las cantidades vendidas
+        Map<Integer, BigDecimal> gananciasPorProducto = new HashMap<>();
+        Map<Integer, Integer> cantidadesVendidasPorProducto = new HashMap<>();
+
+        detallesOrden.forEach(detalle -> {
+            Integer idProducto = detalle.getProducto().getIdProducto();
+            BigDecimal precioUnitario = detalle.getProducto().getPrecioItem();
+
+            gananciasPorProducto.merge(idProducto, precioUnitario.multiply(BigDecimal.valueOf(detalle.getCantidad())), BigDecimal::add);
+            cantidadesVendidasPorProducto.merge(idProducto, detalle.getCantidad(), Integer::sum);
+        });
 
         // Encontrar el producto con más ganancias
         Map.Entry<Integer, BigDecimal> productoMasRentableEntry = gananciasPorProducto.entrySet().stream()
@@ -467,6 +925,7 @@ public class ReporteService {
         if (productoMasRentableEntry != null) {
             Integer idProductoMasRentable = productoMasRentableEntry.getKey();
             BigDecimal gananciaTotal = productoMasRentableEntry.getValue();
+            Integer cantidadVendida = cantidadesVendidasPorProducto.get(idProductoMasRentable);
 
             // Obtener información adicional del producto
             ProductoEntity productoMasRentableEntity = productoRepository.findById(idProductoMasRentable).orElse(null);
@@ -478,7 +937,7 @@ public class ReporteService {
                 // Obtener las ventas por mes del producto
                 Map<String, Integer> ventasPorMesProducto = obtenerVentasPorMesProducto(productoMasRentableEntity);
 
-                return new ProductoReporteDTO(nombreProductoMasRentable, 0, precioUnitario, gananciaTotal, ventasPorMesProducto);
+                return new ProductoReporteDTO(nombreProductoMasRentable, cantidadVendida,gananciaTotal, precioUnitario, ventasPorMesProducto);
             }
         }
 
