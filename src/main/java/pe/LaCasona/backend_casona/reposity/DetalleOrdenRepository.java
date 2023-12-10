@@ -5,7 +5,6 @@ import pe.LaCasona.backend_casona.models.Entity.DetalleOrdenEntity;
 import pe.LaCasona.backend_casona.models.Entity.OrdenEntity;
 import pe.LaCasona.backend_casona.models.Entity.ProductoEntity;
 
-import java.util.Date;
 import java.util.List;
 
 public interface DetalleOrdenRepository extends JpaRepository<DetalleOrdenEntity, Integer> {
