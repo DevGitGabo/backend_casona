@@ -244,7 +244,7 @@ public class BackendCasonaApplication {
 			producto3.setCategoria(categoria);
 			producto3.setProducto(Producto.ROYAL);
 			producto3.setPrecioItem(new BigDecimal(6));
-			productoRepository.save(producto);
+			productoRepository.save(producto3);
 
 			ProductoEntity producto4 = new ProductoEntity();
 			producto4.setCategoria(categoria);

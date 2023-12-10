@@ -14,3 +14,5 @@
 2023-12-07 12:49:39 - Errororg.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing : pe.LaCasona.backend_casona.models.Entity.DetalleOrdenEntity.orden -> pe.LaCasona.backend_casona.models.Entity.OrdenEntity
 2023-12-09 08:15:59 - Errorcould not prepare statement [La base de datos ya esta cerrada (para des-habilitar el cerrado automatico durante el shutdown de la VM, agregue ";DB_CLOSE_ON_EXIT=FALSE" a la URL de conexión)
 Database is already closed (to disable automatic closing at VM shutdown, add ";DB_CLOSE_ON_EXIT=FALSE" to the db URL) [90121-214]] [select a1_0.user_id,a2_0.user_id,a2_1.role_id,a2_1.authority,a1_0.password,a1_0.username from users a1_0 left join (user_role_junction a2_0 join roles a2_1 on a2_1.role_id=a2_0.role_id) on a1_0.user_id=a2_0.user_id where a1_0.user_id=?]
+2023-12-09 18:52:06 - No se encontró el ProductoEntity para el producto: ROYAL
+2023-12-09 18:55:11 - No se encontró el ProductoEntity para el producto: ROYAL
