@@ -12,6 +12,7 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 public class ReporteResponseDTO {
+    private int id;
     private DatosGenerales datosGenerales;
     private List<ProductoReporteDTO> productos;
 

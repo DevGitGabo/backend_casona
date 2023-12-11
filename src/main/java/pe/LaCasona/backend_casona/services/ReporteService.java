@@ -1,5 +1,6 @@
 package pe.LaCasona.backend_casona.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.LaCasona.backend_casona.models.DTO.Producto;
@@ -7,11 +8,9 @@ import pe.LaCasona.backend_casona.models.DTO.Reporte.DatosGenerales;
 import pe.LaCasona.backend_casona.models.DTO.Reporte.ProductoReporteDTO;
 import pe.LaCasona.backend_casona.models.DTO.Reporte.ReporteDTO;
 import pe.LaCasona.backend_casona.models.DTO.Reporte.ReporteResponseDTO;
-import pe.LaCasona.backend_casona.models.Entity.DetalleOrdenEntity;
-import pe.LaCasona.backend_casona.models.Entity.DetallePagoEntity;
-import pe.LaCasona.backend_casona.models.Entity.OrdenEntity;
-import pe.LaCasona.backend_casona.models.Entity.ProductoEntity;
+import pe.LaCasona.backend_casona.models.Entity.*;
 import pe.LaCasona.backend_casona.reposity.DetalleOrdenRepository;
+import pe.LaCasona.backend_casona.reposity.HistorialReporteRepository;
 import pe.LaCasona.backend_casona.reposity.OrdenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import pe.LaCasona.backend_casona.reposity.ProductoRepository;
@@ -35,6 +34,27 @@ public class ReporteService {
     private DetalleOrdenRepository detalleOrdenRepository;
     @Autowired
     private ProductoRepository productoRepository;
+    @Autowired
+    private HistorialReporteRepository historialReporteRepository;
+
+    public List<ReporteResponseDTO> getAllHistoriales() {
+        List<HistorialReporteEntity> historiales = historialReporteRepository.findAll();
+
+        return historiales.stream()
+                .map(this::convertirStringAReporteDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ReporteResponseDTO convertirStringAReporteDTO(HistorialReporteEntity historialReporteEntity) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ReporteResponseDTO reporteDTO = objectMapper.readValue(historialReporteEntity.getDetalleReporte(), ReporteResponseDTO.class);
+            return reporteDTO;
+        } catch (Exception e) {
+            e.printStackTrace();  // Manejo apropiado de la excepción según tus necesidades
+            return null;
+        }
+    }
 
     public ReporteResponseDTO generateReporte(ReporteDTO parametros) {
         ReporteResponseDTO reporte = new ReporteResponseDTO();
@@ -87,7 +107,35 @@ public class ReporteService {
             reporte.setDatosGenerales(datosGenerales);
         }
 
+        // Guardar en el historial
+        HistorialReporteEntity historialReporte = new HistorialReporteEntity();
+        historialReporte.setFechaCreacion(new Date());
+        historialReporte.setDetalleReporte(convertirReporteDTOAString(reporte));  // Ajusta esto según cómo quieras almacenar el detalle
+
+        // Guardar la entidad en la base de datos
+        historialReporte = historialReporteRepository.save(historialReporte);
+
+        // Acceder al ID generado
+        int idGenerado = historialReporte.getId();
+
+        // Asignar el ID al reporte (ajusta esto según la estructura de tu ReporteResponseDTO)
+        reporte.setId(idGenerado);
+
+        historialReporte.setDetalleReporte(convertirReporteDTOAString(reporte));
+
+        historialReporteRepository.save(historialReporte);
+
         return reporte;
+    }
+
+    private String convertirReporteDTOAString(ReporteResponseDTO reporteDTO) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(reporteDTO);
+        } catch (Exception e) {
+            e.printStackTrace();  // Manejo apropiado de la excepción según tus necesidades
+            return null;
+        }
     }
 
     public List<ProductoReporteDTO> generarReporteFiltradoPorFechasYProductos(

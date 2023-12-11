@@ -9,6 +9,8 @@ import pe.LaCasona.backend_casona.models.DTO.Reporte.ReporteResponseDTO;
 import pe.LaCasona.backend_casona.services.OrderService;
 import pe.LaCasona.backend_casona.services.ReporteService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/counter")
 @CrossOrigin("*")
@@ -18,5 +20,10 @@ public class CounterController {
     @PostMapping("/generateReporte")
     public ReporteResponseDTO generateReporte(@RequestBody ReporteDTO body) {
         return reporteService.generateReporte(body);
+    }
+
+    @GetMapping("/getAllHistoriales")
+    public List<ReporteResponseDTO> getAllHistoriales() {
+        return reporteService.getAllHistoriales();
     }
 }
