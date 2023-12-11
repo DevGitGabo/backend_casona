@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ReporteResponseDTO {
     private int id;
+    private String tipoReporte;
     private DatosGenerales datosGenerales;
     private List<ProductoReporteDTO> productos;
 

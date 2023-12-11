@@ -107,6 +107,8 @@ public class ReporteService {
             reporte.setDatosGenerales(datosGenerales);
         }
 
+        reporte.setTipoReporte(parametros.getTipoReporte());
+
         // Guardar en el historial
         HistorialReporteEntity historialReporte = new HistorialReporteEntity();
         historialReporte.setFechaCreacion(new Date());
