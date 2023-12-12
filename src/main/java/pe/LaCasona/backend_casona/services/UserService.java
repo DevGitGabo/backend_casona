@@ -36,6 +36,13 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void deleteUser(String id) {
         try {
+            UsuarioEntity userDelete = usuarioRepository.findByIdUsuario(Integer.valueOf(id));
+            List<CamareroEntity> camarerosToDelete = camareroRepository.findByUsuario(userDelete);
+
+            for (CamareroEntity camarero : camarerosToDelete) {
+                camareroRepository.delete(camarero);
+            }
+
             userRepository.deleteById(Integer.valueOf(id));
             usuarioRepository.deleteById(Integer.valueOf(id));
         } catch (Exception e) {
